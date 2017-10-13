@@ -24,6 +24,16 @@
                     <option v-for="product in products" :value="product.prod_id">{{product.prod_name}}</option>
                 </select>
             </div>
+            <div v-if="selected.product || selected.campaign">
+                <div class="form-group col-md-6">
+                    <label for="from">De</label>
+                    <input class="form-control" name="from" type="date" v-model="dateFilter.from" v-on:change="computeTotals()"/>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="to">à</label>
+                    <input class="form-control" name="to" type="date" v-model="dateFilter.to" v-on:change="computeTotals()"/>
+                </div>
+            </div>
             <div v-if="selected.product || selected.campaign" class="col-xs-12">
                 <table class="table">
                     <thead>
@@ -40,12 +50,12 @@
                             <th v-on:click="sortBy('clicks', 'int')">Clics</th>
                             <th v-on:click="sortBy('tx_clicks', 'float')">Taux Clics</th>
                             <th v-on:click="sortBy('unsubscribes', 'int')">Désabonnements</th>
-                            <th v-on:click="sortBy('nb_coupons', 'int')">Coupons</th>
+                            <th v-on:click="sortBy('coupons', 'int')">Coupons</th>
                             <th v-on:click="sortBy('tx_coupons', 'float')">Taux coupons</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="msg in messages">
+                        <tr v-for="msg in filteredMsgs">
                             <td>{{msg.msg_name}}</td>
                             <td>{{msg.start}}</td>
                             <td>{{msg.prog}}</td>
@@ -57,9 +67,25 @@
                             <td>{{msg.tx_opened}}%</td>
                             <td>{{msg.clicks}}</td>
                             <td>{{msg.tx_clicks}}%</td>
-                            <td>{{msg.unsubscribes}}%</td>
-                            <td>{{msg.nb_coupons}}</td>
+                            <td>{{msg.tx_unsubscribes}}%</td>
+                            <td>{{msg.coupons}}</td>
                             <td>{{msg.tx_coupons}}%</td>
+                        </tr>
+                        <tr>
+                            <td>TOTAL</td>
+                            <td></td>
+                            <td>{{totals.prog}}</td>
+                            <td>{{totals.fichier}}</td>
+                            <td>{{totals.sent}}</td>
+                            <td>{{totals.aboutis}}</td>
+                            <td>{{totals.tx_aboutis}}%</td>
+                            <td>{{totals.opened}}</td>
+                            <td>{{totals.tx_opened}}%</td>
+                            <td>{{totals.clicks}}</td>
+                            <td>{{totals.tx_clicks}}%</td>
+                            <td>{{totals.tx_unsubscribes}}%</td>
+                            <td>{{totals.coupons}}</td>
+                            <td>{{totals.tx_coupons}}%</td>
                         </tr>
                     </tbody>
                 </table>
