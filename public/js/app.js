@@ -20,7 +20,6 @@ var app = new Vue({
             },
             msgIds : [],
             msgIdKeys : {} //classe les positions dans "messages" par "msg_id" schéma
-            , sortOrder : 'asc'
             , sortCol : null
             , dateFilter : {
                 from : null,
@@ -41,6 +40,8 @@ var app = new Vue({
                 coupons :   0,
                 tx_coupons :   0
             }
+            , readyToExport : false
+            , exportUri : ''
         }
     },
     computed : {
@@ -114,7 +115,6 @@ var app = new Vue({
                 for (var i in self.messages) {
                     self.msgIds.push(self.messages[i].msg_id);
                     self.msgIdKeys[self.messages[i].msg_id] = i; //remember position of the message
-
                 };
 
                 self.computeTotals();
@@ -123,22 +123,32 @@ var app = new Vue({
                     count++;
                     let aboutis = parseInt(self.messages[self.msgIdKeys[res.data.msg_id]].aboutis);
                     let unsubscribes = parseInt(res.data.unsubscribes);
-                    let tx_unsubscribes = unsubscribes / aboutis * 100;
-                    let tx_coupons = parseInt(res.data.coupons) / aboutis * 100;
-                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'unsubscribes', unsubscribes.toFixed(3));
-                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'tx_unsubscribes', tx_unsubscribes.toFixed(3));
+                    let tx_unsubscribes = self.isNumber(aboutis)
+                        ? (unsubscribes / aboutis * 100).toFixed(3) : '';
+                    let tx_coupons = self.isNumber(aboutis)
+                        ? (parseInt(res.data.coupons) / aboutis * 100).toFixed(3) : '';
+                    // let tx_unsubscribes = unsubscribes / aboutis * 100;
+                    // let tx_coupons = parseInt(res.data.coupons) / aboutis * 100;
+                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'unsubscribes', unsubscribes);
+                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'tx_unsubscribes', tx_unsubscribes);
                     self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'prog', res.data.envois);
                     self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'coupons', res.data.coupons);
-                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'tx_coupons', tx_coupons.toFixed(3));
+                    self.$set(self.messages[self.msgIdKeys[res.data.msg_id]], 'tx_coupons', tx_coupons);
 
                     if (self.isNumber(res.data.envois)) self.totals.prog += res.data.envois;
                     if (self.isNumber(unsubscribes)) self.totals.unsubscribes += unsubscribes;
                     if (self.isNumber(res.data.coupons)) self.totals.coupons += res.data.coupons;
                     self.computeTotalRates();
 
+
                     if (count < self.messages.length) {
                         next = self.messages[count].msg_id;
                         axios.get('/api/messages/all-infos/' + next).then(infoCallback);
+                    }
+
+                    if (count == self.messages.length - 1) {
+                        self.readyToExport = true;
+                        self.exportUri = self.exporter();
                     }
 
                 }
@@ -183,7 +193,7 @@ var app = new Vue({
                     return [row2, row1];
             }
 
-            function mergeSort(tab, key, type, order) {
+            function mergeSort(tab, key, type) {
                 if (tab.length == 2) {
                     if (type == 'int') {
                         if (parseInt(tab[0][key]) < parseInt(tab[1][key]) || !self.isNumber(tab[0][key])) {
@@ -205,12 +215,11 @@ var app = new Vue({
                             return [tab[1], tab[0]];
                         }
                     } else if (type == 'date')
-                        var yo = sortByDates(tab[0], tab[1]);
                         return sortByDates(tab[0], tab[1]);
                 } else if (tab.length > 2) {
                     var half = parseInt(tab.length / 2);
-                    var first = mergeSort(tab.slice(0, half), key, type, order);
-                    var last = mergeSort(tab.slice(half, tab.length), key, type, order);
+                    var first = mergeSort(tab.slice(0, half), key, type);
+                    var last = mergeSort(tab.slice(half, tab.length), key, type);
                     var fIndex = 0, lIndex = 0, sortedTab = [], sIndex = 0;
                     while(sIndex < tab.length) {
                         if (lIndex == last.length) {
@@ -246,7 +255,7 @@ var app = new Vue({
                         } else if (type == 'date') {
                             var sortedByDates = sortByDates(first[fIndex], last[lIndex]);
                             sortedTab[sIndex] = sortedByDates[0];
-                            if (sortedByDates[0].start == first[fIndex].start)
+                            if (sortedByDates[0].msg_name == first[fIndex].msg_name)
                                 fIndex++
                             else lIndex++;
                         }
@@ -258,11 +267,41 @@ var app = new Vue({
                 }
             }
 
-            this.messages = col == this.sortCol
+            if (this.readyToExport) {
+                this.messages = col == this.sortCol
                 ? this.messages.reverse()
-                : mergeSort(this.messages, col, type, this.sortOrder);
+                : mergeSort(this.messages, col, type);
 
-            this.sortCol = col;
+                this.msgIds = [], this.msgIdKeys = [];
+                for (var i in this.messages) {
+                    this.msgIds.push(this.messages[i].msg_id);
+                    this.msgIdKeys[this.messages[i].msg_id] = i; //remember position of the message
+                };
+
+                this.sortCol = col;
+            }
+        },
+        exporter : function() {
+            function ConvertToCSV(objArray) {
+                var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+                var str = '';
+
+                for (var i = 0; i < array.length; i++) {
+                    var line = '';
+                    for (var index in array[i]) {
+                        if (line != '') line += ','
+
+                        line += array[i][index];
+                    }
+
+                    str += line + '\r\n';
+                }
+
+                return str;
+            }
+            // console.log('exporter', this.filteredMsgs)
+            this.exportUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(ConvertToCSV(this.filteredMsgs))
+
         },
         isNumber : function(number) {
             return !isNaN(parseFloat(number))

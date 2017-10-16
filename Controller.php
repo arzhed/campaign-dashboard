@@ -52,7 +52,7 @@ class Controller {
     }
 
     public function messages($product, $campaign) {
-        $query = "SELECT msg_id, m.msg_name, DATE_FORMAT(start, '%d/%m/%Y') as start, fichier, sent, aboutis, aboutis/fichier*100 as tx_aboutis,opened, opened/fichier*100 as tx_opened, clicks, clicks/fichier*100 as tx_clicks "
+        $query = "SELECT msg_id, m.msg_name, DATE_FORMAT(start, '%d/%m/%Y') as start, fichier, sent, aboutis, aboutis/sent*100 as tx_aboutis,opened, opened/aboutis*100 as tx_opened, clicks, clicks/aboutis*100 as tx_clicks "
             // .",nb_coupons, nb_coupons/fichier*100 as tx_coupons"
             .' FROM messages m '
             .' LEFT JOIN ('

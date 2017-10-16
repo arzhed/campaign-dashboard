@@ -27,31 +27,31 @@
             <div v-if="selected.product || selected.campaign">
                 <div class="form-group col-md-6">
                     <label for="from">De</label>
-                    <input class="form-control" name="from" type="date" v-model="dateFilter.from" v-on:change="computeTotals()"/>
+                    <input class="form-control" name="from" type="date" v-model="dateFilter.from" v-on:change="computeTotals()" :disabled="!readyToExport"/>
                 </div>
                 <div class="form-group col-md-6">
                     <label for="to">à</label>
-                    <input class="form-control" name="to" type="date" v-model="dateFilter.to" v-on:change="computeTotals()"/>
+                    <input class="form-control" name="to" type="date" v-model="dateFilter.to" v-on:change="computeTotals()" :disabled="!readyToExport"/>
                 </div>
             </div>
             <div v-if="selected.product || selected.campaign" class="col-xs-12">
-                <table class="table">
+                <table id="messages" class="table">
                     <thead>
                         <tr>
-                            <th v-on:click="sortBy('msg_name', 'string')">Message</th>
-                            <th v-on:click="sortBy('start', 'date')">Début</th>
-                            <th v-on:click="sortBy('prog', 'int')">Programmés</th>
-                            <th v-on:click="sortBy('fichier', 'int')">Fichier</th>
-                            <th v-on:click="sortBy('sent', 'int')">Envoyés</th>
-                            <th v-on:click="sortBy('aboutis', 'int')">Aboutis</th>
-                            <th v-on:click="sortBy('tx_aboutis', 'float')">TauxAboutis</th>
-                            <th v-on:click="sortBy('opened', 'int')">Ouverts</th>
-                            <th v-on:click="sortBy('tx_opened', 'float')">Taux Ouverts</th>
-                            <th v-on:click="sortBy('clicks', 'int')">Clics</th>
-                            <th v-on:click="sortBy('tx_clicks', 'float')">Taux Clics</th>
-                            <th v-on:click="sortBy('unsubscribes', 'int')">Désabonnements</th>
-                            <th v-on:click="sortBy('coupons', 'int')">Coupons</th>
-                            <th v-on:click="sortBy('tx_coupons', 'float')">Taux coupons</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('msg_name', 'string')">Message</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('start', 'date')">Début</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('prog', 'int')">Programmés</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('fichier', 'int')">Fichier</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('sent', 'int')">Envoyés</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('aboutis', 'int')">Aboutis</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('tx_aboutis', 'float')">TauxAboutis</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('opened', 'int')">Ouverts</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('tx_opened', 'float')">Taux Ouverts</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('clicks', 'int')">Clics</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('tx_clicks', 'float')">Taux Clics</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('tx_unsubscribes', 'float')">Désabonnements</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('coupons', 'int')">Coupons</th>
+                            <th :data-ready="readyToExport" v-on:click="sortBy('tx_coupons', 'float')">Taux coupons</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,16 +62,16 @@
                             <td>{{msg.fichier}}</td>
                             <td>{{msg.sent}}</td>
                             <td>{{msg.aboutis}}</td>
-                            <td>{{msg.tx_aboutis}}%</td>
+                            <td>{{msg.tx_aboutis}}<span v-if="isNumber(msg.tx_aboutis)">%</span></td>
                             <td>{{msg.opened}}</td>
-                            <td>{{msg.tx_opened}}%</td>
+                            <td>{{msg.tx_opened}}<span v-if="isNumber(msg.tx_opened)">%</span></td>
                             <td>{{msg.clicks}}</td>
-                            <td>{{msg.tx_clicks}}%</td>
-                            <td>{{msg.tx_unsubscribes}}%</td>
+                            <td>{{msg.tx_clicks}}<span v-if="isNumber(msg.tx_clicks)">%</span></td>
+                            <td>{{msg.tx_unsubscribes}}<span v-if="isNumber(msg.tx_unsubscribes)">%</span></td>
                             <td>{{msg.coupons}}</td>
-                            <td>{{msg.tx_coupons}}%</td>
+                            <td>{{msg.tx_coupons}}<span v-if="isNumber(msg.tx_coupons)">%</span></td>
                         </tr>
-                        <tr>
+                        <tr id="totals">
                             <td>TOTAL</td>
                             <td></td>
                             <td>{{totals.prog}}</td>
@@ -89,6 +89,10 @@
                         </tr>
                     </tbody>
                 </table>
+                <!-- <a v-if="readyToExport" class="button col-xs-12 col-md-3" v-on:click="exporter">Exporter</a> -->
+                <div class="btn-group btn-group-justified" role="group">
+                    <a :disabled="!readyToExport" download="export.csv" class="btn btn-primary col-xs-12 col-md-3" @click="exporter" :href="exportUri">Exporter</a>
+                </div>
             </div>
         </div>
     </div>

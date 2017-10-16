@@ -1,0 +1,19 @@
+#totals {
+    font-weight: bold;
+}
+
+table.table#messages {
+    margin-bottom: 3rem;
+}
+
+.btn-group {
+    margin-bottom: 2rem;
+}
+
+thead th {
+    cursor: not-allowed;
+}
+
+thead th[data-ready="true"] {
+    cursor: pointer;
+}
