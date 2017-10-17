@@ -283,22 +283,47 @@ var app = new Vue({
             }
         },
         exporter : function() {
+            var self = this;
             function ConvertToCSV(objArray) {
                 var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
                 var str = '';
+                // var str = 'Id,Message,Début,Programmés,Fichier,Envoyés,Aboutis,TauxAboutis,Ouverts,Taux Ouverts,Clics,Taux Clics,Désabonnements,Coupons,Taux Coupons\r\n';
+                var head = '';
+
+                var count = 0
+                var msgNameIndex = -1;
+                for (var index in array[0]) {
+                        head += count == 0 ? '' : ',';
+                        head += index;
+                        count++;
+                }
+                head += '\r\n';
 
                 for (var i = 0; i < array.length; i++) {
                     var line = '';
                     for (var index in array[i]) {
                         if (line != '') line += ','
 
-                        line += array[i][index];
+
+                        if (index == 'msg_name') {
+                            var strToTest = array[i][index];
+                            var finalStr = '';
+                            while(strToTest.indexOf('"') != -1) {
+                                var guiInd = strToTest.indexOf('"');
+                                finalStr += strToTest.substr(0, guiInd) + '\\' + strToTest.substr(guiInd, 1);
+                                strToTest = strToTest.substr(guiInd+1);
+                            }
+                            line += '"' + finalStr + strToTest + '"';
+
+                        } else {
+                            line += '"'+ array[i][index] + '"';
+                        }
                     }
 
                     str += line + '\r\n';
                 }
 
-                return str;
+                return head + str;
             }
             // console.log('exporter', this.filteredMsgs)
             this.exportUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(ConvertToCSV(this.filteredMsgs))
