@@ -109,6 +109,7 @@ var app = new Vue({
             axios.get('/api/messages/product/'+this.selected.product+'/campaign/'+this.selected.campaign).then(function(res) {
                 self.messages = res.data;
                 self.msgIds = [], self.msgIdKeys = [];
+                self.readyToExport = false;
                 var requests = [];
                 var next = self.messages[0].msg_id, count = 0;
 
@@ -146,7 +147,7 @@ var app = new Vue({
                         axios.get('/api/messages/all-infos/' + next).then(infoCallback);
                     }
 
-                    if (count == self.messages.length - 1) {
+                    if (count == self.messages.length ) {
                         self.readyToExport = true;
                         self.exportUri = self.exporter();
                     }
